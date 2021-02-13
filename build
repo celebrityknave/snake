@@ -1,0 +1,2 @@
+#!/bin/bash
+gcc -o snake snake.c -lGL -lGLU -lGLEW -lglut -lm
