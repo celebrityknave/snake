@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/freeglut.h>   // freeglut.h might be a better alternative, if available.
 #include <unistd.h>
+#include <math.h>
 
 #define INITIAL_WINDOW_WIDTH 500
 #define INITIAL_WINDOW_HEIGHT 500
@@ -12,9 +14,23 @@ const int target_fps = 4;
 //const float time_per_frame = 1000 / target_fps;
 long current_frame_no = 0;
 float sleep_t = (1.0f / target_fps) * 1000;
+float epsilon = 0.00001;
 
 int msleep(unsigned int tms) {
 	return usleep(tms * 1000);
+}
+bool fequal(GLfloat a, GLfloat b)
+{
+	return fabs(a-b) < epsilon;
+}
+
+// Generate random number between -1.0 and 1.0 in 0.1-point increments
+GLfloat rand_low()
+{
+	float rand_no = -1.0f + 2.0f*((double)rand() / (double)RAND_MAX);
+	float rand_rounded = roundf( rand_no * 10.0f) / 10.0f;
+
+	return rand_rounded;
 }
 
 struct {
@@ -25,6 +41,13 @@ struct {
 	GLfloat direction;
 	GLint length;
 } snake;
+
+struct {
+	GLfloat x;
+	GLfloat y;
+	GLfloat size;
+} food;
+
 
 void draw_square(GLfloat x, GLfloat y, GLfloat square_size)
 {
@@ -42,6 +65,11 @@ void draw_square(GLfloat x, GLfloat y, GLfloat square_size)
     glVertex2f( x+square_size, y-square_size );
     glEnd();
 }
+void gen_food()
+{
+	food.x = rand_low();
+	food.y = rand_low();
+}
 
 void display() {  // Display function will draw the image.
 
@@ -49,10 +77,9 @@ void display() {  // Display function will draw the image.
     glClear( GL_COLOR_BUFFER_BIT );
 
 	draw_square(snake.x, snake.y, snake.size);
-	draw_square( 0.9, 0.9, 0.02);
+	draw_square(food.x, food.y, food.size);
 
     glutSwapBuffers(); // Required to copy color buffer onto the screen.
-
 }
 
 static void keyboard(unsigned char key, int x, int y)
@@ -115,19 +142,21 @@ static void reshape(int w, int h)
 }
 static void timer (int msec)
 {
-	fprintf(stdout, "Hello\n");
+	fprintf(stdout, "Snake x: %f, food x: %f, snake y: %f, food y: %f\n", snake.x, food.x, snake.y, food.y);
+	if(fequal(snake.x, food.x) && fequal(snake.y, food.y))
+		gen_food();
 	switch(snake_direction) {
 		case 0:
-			snake.y += 0.1;
+			snake.y += 0.1f;
 			break;
 		case 1:
-			snake.y -= 0.1;
+			snake.y -= 0.1f;
 			break;
 		case 2:
-			snake.x -= 0.1;
+			snake.x -= 0.1f;
 			break;
 		case 3:
-			snake.x += 0.1;
+			snake.x += 0.1f;
 			break;
 	}
 	glutTimerFunc(sleep_t, timer, 0);
@@ -145,6 +174,7 @@ int main( int argc, char** argv )
 	snake.size = 0.05;
 	snake.x = 0;
 	snake.y = 0;
+	food.size = 0.02;
 
     glutInit(&argc, argv);				 // Initialize GLUT and
     glutInitDisplayMode(GLUT_SINGLE);    // Use single color buffer and no depth buffer.
