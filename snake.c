@@ -160,6 +160,8 @@ static void timer (int msec)
 		gen_food();
 	}
 
+	// This is really expensive. Should replace it with a 'hold snake.head coords for
+	// snake.length steps' setup
 	for(int i=snake.length; i >= 0; --i)
 	{
 		if(i == 0)
@@ -172,7 +174,7 @@ static void timer (int msec)
 			snake.x[i] = snake.x[i-1];
 			snake.y[i] = snake.y[i-1];
 		}
-		fprintf(stdout, "Co-ordinates of x[%d]: %f, %f\n", i, snake.x[i], snake.y[i]);
+		//fprintf(stdout, "Co-ordinates of x[%d]: %f, %f\n", i, snake.x[i], snake.y[i]);
 	}
 
 	switch(snake_direction) {
@@ -189,6 +191,7 @@ static void timer (int msec)
 			snake.head.x += 0.1f;
 			break;
 	}
+	glutPostRedisplay();
 	glutTimerFunc(sleep_t, timer, 0);
 }
 
@@ -216,7 +219,7 @@ int main( int argc, char** argv )
 	glutTimerFunc(sleep_t, timer, 0);
 	//glutReshapeFunc(&reshape);
     glutKeyboardFunc(&keyboard);
-	glutIdleFunc(&update);
+	//glutIdleFunc(&update);
 
     glutMainLoop(); // Run the event loop!  This function does not return.
                     // Program ends when user closes the window.
