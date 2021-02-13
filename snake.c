@@ -7,8 +7,6 @@
 #define INITIAL_WINDOW_WIDTH 500
 #define INITIAL_WINDOW_HEIGHT 500
 
-GLfloat snake_x = 0;
-GLfloat snake_y = 0;
 short snake_direction = 0;
 const int target_fps = 4;
 //const float time_per_frame = 1000 / target_fps;
@@ -21,6 +19,11 @@ int msleep(unsigned int tms) {
 
 struct {
 	GLsizei window_size[2];
+	GLfloat size;
+	GLfloat x;
+	GLfloat y;
+	GLfloat direction;
+	GLint length;
 } snake;
 
 void draw_square(GLfloat x, GLfloat y, GLfloat square_size)
@@ -38,22 +41,19 @@ void draw_square(GLfloat x, GLfloat y, GLfloat square_size)
     glColor3f( 0, 1, 0 );
     glVertex2f( x+square_size, y-square_size );
     glEnd();
-
 }
-
 
 void display() {  // Display function will draw the image.
 
     glClearColor( 0, 0, 0, 1 );  // (In fact, this is the default.)
     glClear( GL_COLOR_BUFFER_BIT );
 
-	draw_square(snake_x, snake_y, 0.05);
+	draw_square(snake.x, snake.y, snake.size);
 	draw_square( 0.9, 0.9, 0.02);
 
     glutSwapBuffers(); // Required to copy color buffer onto the screen.
 
 }
-
 
 static void keyboard(unsigned char key, int x, int y)
 {
@@ -67,7 +67,7 @@ static void keyboard(unsigned char key, int x, int y)
 		if(snake_direction != 1 && snake_direction != 0)
 		{
 			snake_direction = 0;
-			fprintf(stdout, "Up, y=%f\n", snake_y);
+			fprintf(stdout, "Up, y=%f\n", snake.y);
 		}
 	}
 	if(key == 's' || key == 'S')
@@ -76,7 +76,7 @@ static void keyboard(unsigned char key, int x, int y)
 		if(snake_direction != 0 && snake_direction != 1)
 		{
 			snake_direction = 1;
-			fprintf(stdout, "Down, y=%f\n", snake_y);
+			fprintf(stdout, "Down, y=%f\n", snake.y);
 		}
 	}
 	if(key == 'a' || key == 'A')
@@ -85,7 +85,7 @@ static void keyboard(unsigned char key, int x, int y)
 		if(snake_direction != 3 && snake_direction != 2)
 		{
 			snake_direction = 2;
-			fprintf(stdout, "Left, x=%f\n", snake_x);
+			fprintf(stdout, "Left, x=%f\n", snake.x);
 		}
 	}
 	if(key == 'd' || key == 'D')
@@ -94,7 +94,7 @@ static void keyboard(unsigned char key, int x, int y)
 		if(snake_direction != 2 && snake_direction != 3)
 		{
 			snake_direction = 3;
-			fprintf(stdout, "Right, x=%f\n", snake_x);
+			fprintf(stdout, "Right, x=%f\n", snake.x);
 		}
 	}
 }
@@ -118,16 +118,16 @@ static void timer (int msec)
 	fprintf(stdout, "Hello\n");
 	switch(snake_direction) {
 		case 0:
-			snake_y += 0.1;
+			snake.y += 0.1;
 			break;
 		case 1:
-			snake_y -= 0.1;
+			snake.y -= 0.1;
 			break;
 		case 2:
-			snake_x -= 0.1;
+			snake.x -= 0.1;
 			break;
 		case 3:
-			snake_x += 0.1;
+			snake.x += 0.1;
 			break;
 	}
 	glutTimerFunc(sleep_t, timer, 0);
@@ -136,16 +136,21 @@ static void timer (int msec)
 static void update(void)
 {
 	glutPostRedisplay();
-
 }
 
-int main( int argc, char** argv ) {  // Initialize GLUT and
+int main( int argc, char** argv )
+{
+	snake.window_size[0] = INITIAL_WINDOW_WIDTH;
+	snake.window_size[1] = INITIAL_WINDOW_HEIGHT;
+	snake.size = 0.05;
+	snake.x = 0;
+	snake.y = 0;
 
-    glutInit(&argc, argv);
+    glutInit(&argc, argv);				 // Initialize GLUT and
     glutInitDisplayMode(GLUT_SINGLE);    // Use single color buffer and no depth buffer.
-    glutInitWindowSize(INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT);         // Size of display area, in pixels.
+    glutInitWindowSize(snake.window_size[0], snake.window_size[1]);         // Size of display area, in pixels.
     glutInitWindowPosition(100,100);     // Location of window in screen coordinates.
-    glutCreateWindow("Snake"); // Parameter is window title.
+    glutCreateWindow("Snake"); 			 // Parameter is window title.
     glutDisplayFunc(display);            // Called when the window needs to be redrawn.
 	glutTimerFunc(sleep_t, timer, 0);
 	//glutReshapeFunc(&reshape);
