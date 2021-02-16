@@ -9,32 +9,29 @@
 #define INITIAL_WINDOW_WIDTH 500
 #define INITIAL_WINDOW_HEIGHT 500
 
-// TODO: make snake have length.
-//		Efficient method: prevent gl from wiping square drawing for snake.length timer ticks
-//		Expensive method: hold all x and y co-ordinates for snake.
-
-short snake_direction = 0;
+// Variables to control frame rate
 const int target_fps = 4;
-//const float time_per_frame = 1000 / target_fps;
-long current_frame_no = 0;
 float sleep_t = (1.0f / target_fps) * 1000;
+
+// Variables to control arena size
+const int grid_size = 10;
+const float grid_increment = 1.0f / grid_size;
+
+// For comparing float values
 float epsilon = 0.00001;
 
 int msleep(unsigned int tms) {
 	return usleep(tms * 1000);
 }
-bool fequal(GLfloat a, GLfloat b)
-{
+
+// Compare two float values for equality within some given epsilon
+bool fequal(GLfloat a, GLfloat b) {
 	return fabs(a-b) < epsilon;
 }
 
-// Generate random number between -1.0 and 1.0 in 0.1-point increments
-GLfloat rand_low()
-{
-	float rand_no = -1.0f + 2.0f*((double)rand() / (double)RAND_MAX);
-	float rand_rounded = roundf( rand_no * 10.0f) / 10.0f;
-
-	return rand_rounded;
+// Generate random number between -1.0 and 1.0 in 1/grid_size increments
+GLfloat rand_low() {
+	return roundf( (-1.0f + 2.0f*((double)rand() / (double)RAND_MAX)) * (float)grid_size) / (float)grid_size;
 }
 
 struct {
@@ -46,7 +43,7 @@ struct {
 	} head;
 	GLfloat x[256];
 	GLfloat y[256];
-	GLfloat direction;
+	GLint direction;
 	GLint length;
 } snake;
 
@@ -55,7 +52,6 @@ struct {
 	GLfloat y;
 	GLfloat size;
 } food;
-
 
 void draw_square(GLfloat x, GLfloat y, GLfloat square_size)
 {
@@ -73,10 +69,25 @@ void draw_square(GLfloat x, GLfloat y, GLfloat square_size)
     glVertex2f( x+square_size, y-square_size );
     glEnd();
 }
+
 void gen_food()
 {
 	food.x = rand_low();
 	food.y = rand_low();
+
+	for(int i=0; i < snake.length; ++i)
+	{
+		if( fequal(food.x, snake.x[i]) )
+		{
+			if( fequal(food.y, snake.y[i]) )
+			{
+				// Could this be recursive?
+				fprintf(stdout, "COLLISION!\n");
+				food.x = rand_low();
+				food.y = rand_low();
+			}
+		}
+	}
 }
 
 void display() {  // Display function will draw the image.
@@ -102,37 +113,38 @@ static void keyboard(unsigned char key, int x, int y)
 	}
 	if(key == 'w' || key == 'W')
 	{
-		if(snake_direction != 1 && snake_direction != 0)
+		if(snake.direction != 1 && snake.direction != 0)
 		{
-			snake_direction = 0;
+			snake.direction = 0;
 			fprintf(stdout, "Up, y=%f\n", snake.head.y);
 		}
 	}
 	if(key == 's' || key == 'S')
 	{
-		if(snake_direction != 0 && snake_direction != 1)
+		if(snake.direction != 0 && snake.direction != 1)
 		{
-			snake_direction = 1;
+			snake.direction = 1;
 			fprintf(stdout, "Down, y=%f\n", snake.head.y);
 		}
 	}
 	if(key == 'a' || key == 'A')
 	{
-		if(snake_direction != 3 && snake_direction != 2)
+		if(snake.direction != 3 && snake.direction != 2)
 		{
-			snake_direction = 2;
+			snake.direction = 2;
 			fprintf(stdout, "Left, x=%f\n", snake.head.x);
 		}
 	}
 	if(key == 'd' || key == 'D')
 	{
-		if(snake_direction != 2 && snake_direction != 3)
+		if(snake.direction != 2 && snake.direction != 3)
 		{
-			snake_direction = 3;
+			snake.direction = 3;
 			fprintf(stdout, "Right, x=%f\n", snake.head.x);
 		}
 	}
 }
+
 static void reshape(int w, int h)
 {
 	snake.window_size[0] = w;
@@ -148,7 +160,7 @@ static void reshape(int w, int h)
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_MODELVIEW);
 }
-static void timer (int msec)
+static void timer(int msec)
 {
 	if(fequal(snake.head.x, food.x) && fequal(snake.head.y, food.y))
 	{
@@ -174,21 +186,20 @@ static void timer (int msec)
 			snake.x[i] = snake.x[i-1];
 			snake.y[i] = snake.y[i-1];
 		}
-		//fprintf(stdout, "Co-ordinates of x[%d]: %f, %f\n", i, snake.x[i], snake.y[i]);
 	}
 
-	switch(snake_direction) {
+	switch(snake.direction) {
 		case 0:
-			snake.head.y += 0.1f;
+			snake.head.y += grid_increment;
 			break;
 		case 1:
-			snake.head.y -= 0.1f;
+			snake.head.y -= grid_increment;
 			break;
 		case 2:
-			snake.head.x -= 0.1f;
+			snake.head.x -= grid_increment;
 			break;
 		case 3:
-			snake.head.x += 0.1f;
+			snake.head.x += grid_increment;
 			break;
 	}
 	glutPostRedisplay();
@@ -208,6 +219,7 @@ int main( int argc, char** argv )
 	snake.head.x = 0;
 	snake.head.y = 0;
 	snake.length = 1;
+	snake.direction = 0;
 	food.size = 0.02;
 
     glutInit(&argc, argv);				 // Initialize GLUT and
