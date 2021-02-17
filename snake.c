@@ -138,6 +138,8 @@ static void keyboard(unsigned char key, int x, int y)
 	}
 	if(key == 'w' || key == 'W')
 	{
+		// FIXME: this check can sometimes let users reverse the snake
+		// in place with quick enough input.
 		if(snake.direction != 1 && snake.direction != 0)
 		{
 			snake.direction = 0;
@@ -254,6 +256,7 @@ static void update(void)
 
 int main( int argc, char** argv )
 {
+	// Initialise grid to have no collision
 	for(int i=0; i < grid_size*2; ++i)
 	{
 		for(int j=0; j < grid_size*2; ++j)
