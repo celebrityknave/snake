@@ -93,17 +93,15 @@ void gen_food()
 	food.x_position = rand_grid();
 	food.y_position = rand_grid();
 
+	int open_grid
 	// TODO remove this crappy loop and write new function that checks unfilled contents of grid[]
-	for(int i=0; i < snake.length; ++i)
+	for(int i=0; i < grid_size*2; ++i)
 	{
-		if( food.x_position == snake.x[i] )
+		for(int j=0; j < grid_size*2; ++j)
 		{
-			if( food.y_position == snake.y[i])
+			if(!grid[i][j])
 			{
-				// Could be recursive?
-				fprintf(stdout, "COLLISION!\n");
-				food.x_position = rand_grid();
-				food.y_position = rand_grid();
+				// This is actually going to be a pain. It'd be better to reduce grid to a 1d array. TODO tomorrow.
 			}
 		}
 	}
