@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <GL/freeglut.h>   // freeglut.h might be a better alternative, if available.
+#include <GL/freeglut.h>
 #include <unistd.h>
 #include <math.h>
 
@@ -110,7 +110,6 @@ void display() {  // Display function will draw the image.
     glClearColor( 0, 0, 0, 1 );  // (In fact, this is the default.)
     glClear( GL_COLOR_BUFFER_BIT );
 
-	//draw_square(snake.x_position, snake.y_position, snake.size);
 	draw_square(food.x_position, food.y_position, food.size);
 
 	for(int i=0; i < grid_size*2; ++i)
@@ -182,16 +181,16 @@ static void reshape(int w, int h)
 }
 static void timer(int msec)
 {
+	// Check whether snake has eaten a piece of food
 	if(snake.x_position == food.x_position && snake.y_position == food.y_position)
 	{
 		snake.x[snake.length-1] = snake.x_position;
 		snake.y[snake.length-1] = snake.y_position;
 		snake.length++;
 		gen_food();
-
-		fprintf(stdout, "Snake x: %d, snake y: %d,  snake length: %d\n", snake.x_position, snake.y_position, snake.length);
 	}
 
+	// Check snake direction
 	switch(snake.direction) {
 		case 0:
 			snake.y_position++;
@@ -223,6 +222,7 @@ static void timer(int msec)
 		}
 	}
 
+	// Zero all grid locations and write out snake coordinates
 	// This could be more efficient
 	for(int i=0; i < grid_size*2; ++i)
 	{
@@ -275,18 +275,17 @@ int main( int argc, char** argv )
 	snake.direction = 0;
 	food.size = grid_increment / 5;
 
-    glutInit(&argc, argv);				 // Initialize GLUT and
-    glutInitDisplayMode(GLUT_SINGLE);    // Use single color buffer and no depth buffer.
-    glutInitWindowSize(snake.window_size[0], snake.window_size[1]);         // Size of display area, in pixels.
+    glutInit(&argc, argv);				 // Initialise
+    glutInitDisplayMode(GLUT_SINGLE);    // single color buffer and no depth buffer.
+    glutInitWindowSize(snake.window_size[0], snake.window_size[1]); // Size of display area
     glutInitWindowPosition(100,100);     // Location of window in screen coordinates.
-    glutCreateWindow("Snake"); 			 // Parameter is window title.
-    glutDisplayFunc(display);            // Called when the window needs to be redrawn.
+    glutCreateWindow("Snake"); 			 // Window title.
+    glutDisplayFunc(display);            // Called when redrawing window.
 	glutTimerFunc(sleep_t, timer, 0);
 	//glutReshapeFunc(&reshape);
     glutKeyboardFunc(&keyboard);
 
-    glutMainLoop(); // Run the event loop!  This function does not return.
-                    // Program ends when user closes the window.
+    glutMainLoop(); 					 // Run the event loop
 
 	//free(grid);
     return 0;
