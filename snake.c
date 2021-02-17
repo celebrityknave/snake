@@ -109,13 +109,15 @@ void gen_food()
 	}
 }
 
-void display() {  // Display function will draw the image.
-
-    glClearColor( 0, 0, 0, 1 );  // (In fact, this is the default.)
+void display()
+{
+    glClearColor( 0, 0, 0, 1 );
     glClear( GL_COLOR_BUFFER_BIT );
 
+	// Draw food
 	draw_square(food.x_position, food.y_position, food.size);
 
+	// Draw snake
 	for(int i=0; i < grid_size*2; ++i)
 	{
 		for(int j=0; j < grid_size*2; ++j)
