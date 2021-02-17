@@ -19,7 +19,6 @@ const float grid_increment = 1.0f / grid_size;
 
 // For comparing float values
 float epsilon = 0.00001;
-//bool** grid;
 
 int msleep(unsigned int tms) {
 	return usleep(tms * 1000);
@@ -30,14 +29,14 @@ bool fequal(GLfloat a, GLfloat b) {
 	return fabs(a-b) < epsilon;
 }
 
-bool grid[64][64];
+bool grid[64][64]; // TODO dynamically allocate grid size based on user input
 
 // Generate random number between -1.0 and 1.0 in 1/grid_size increments
 GLfloat rand_low() {
 	return roundf( (-1.0f + 2.0f*((double)rand() / (double)RAND_MAX)) * (float)grid_size) / (float)grid_size;
 }
 int rand_grid() {
-return (rand() % grid_size * 2);
+	return (rand() % grid_size * 2);
 }
 
 struct {
@@ -45,7 +44,7 @@ struct {
 	GLfloat size;
 	int x_position;
 	int y_position;
-	int x[256];
+	int x[256];			// TODO dynamically allocate co-ordinate limits based on user input
 	int y[256];
 	GLint direction;
 	GLint length;
@@ -59,15 +58,20 @@ struct {
 
 void draw_square(int grid_x, int grid_y, GLfloat square_size)
 {
-	GLfloat x = (float)(grid_x - grid_size) / (grid_size);
-	GLfloat y = (float)(grid_y - grid_size) / (grid_size);
+	GLfloat x;
+	GLfloat y;
 
-	if(grid_x - grid_size == 0)
+	// Convert grid co-ordinates to floating point values.
+	// TODO: make this conversion its own function
+	if(grid_x - grid_size != 0)
+		x = (float)(grid_x - grid_size) / (grid_size);
+	else
 		x = 0.0f;
-	if(grid_y - grid_size == 0)
-		y = 0.0f;
 
-	//fprintf(stdout, "position: %f, %f\n", x, y);
+	if(grid_y - grid_size != 0)
+		y = (float)(grid_y - grid_size) / (grid_size);
+	else
+		y = 0.0f;
 
     glBegin(GL_POLYGON);
     glColor3f( 0, 1, 0 );
@@ -89,14 +93,14 @@ void gen_food()
 	food.x_position = rand_grid();
 	food.y_position = rand_grid();
 
-	// TODO remove this loop and write new function that checks unfilled contents of grid[]
+	// TODO remove this crappy loop and write new function that checks unfilled contents of grid[]
 	for(int i=0; i < snake.length; ++i)
 	{
 		if( food.x_position == snake.x[i] )
 		{
 			if( food.y_position == snake.y[i])
 			{
-				// Could this be recursive?
+				// Could be recursive?
 				fprintf(stdout, "COLLISION!\n");
 				food.x_position = rand_grid();
 				food.y_position = rand_grid();
@@ -248,10 +252,6 @@ static void update(void)
 
 int main( int argc, char** argv )
 {
-	printf("test");
-
-	//bool ** grid = (bool**)malloc(grid_size*2 * sizeof(bool));
-
 	for(int i=0; i < grid_size*2; ++i)
 	{
 		for(int j=0; j < grid_size*2; ++j)
@@ -267,7 +267,6 @@ int main( int argc, char** argv )
 	food.x_position = rand_grid();
 	food.y_position = rand_grid();
 
-	//grid[snake.x_position][snake.y_position] = 1;
 	snake.window_size[0] = INITIAL_WINDOW_WIDTH;
 	snake.window_size[1] = INITIAL_WINDOW_HEIGHT;
 	snake.size = grid_increment / 2;
