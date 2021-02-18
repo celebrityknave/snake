@@ -29,7 +29,7 @@ bool fequal(GLfloat a, GLfloat b) {
 	return fabs(a-b) < epsilon;
 }
 
-bool grid[64][64]; // TODO dynamically allocate grid size based on user input
+bool grid[4096]; // TODO dynamically allocate grid size based on user input
 
 // Generate random number between -1.0 and 1.0 in 1/grid_size increments
 GLfloat rand_low() {
@@ -93,13 +93,13 @@ void gen_food()
 	food.x_position = rand_grid();
 	food.y_position = rand_grid();
 
-	int open_grid
+	//int open_grid
 	// TODO remove this crappy loop and write new function that checks unfilled contents of grid[]
 	for(int i=0; i < grid_size*2; ++i)
 	{
 		for(int j=0; j < grid_size*2; ++j)
 		{
-			if(!grid[i][j])
+			if(!grid[(grid_size*2)*i + j])
 			{
 				// This is actually going to be a pain. It'd be better to reduce grid to a 1d array. TODO tomorrow.
 			}
@@ -120,7 +120,7 @@ void display()
 	{
 		for(int j=0; j < grid_size*2; ++j)
 		{
-			if(grid[i][j])
+			if(grid[(grid_size*2)*i + j])
 				draw_square(i, j, snake.size);
 		}
 	}
@@ -234,13 +234,13 @@ static void timer(int msec)
 	{
 		for(int j=0; j < grid_size*2; ++j)
 		{
-			grid[i][j] = 0;
+			grid[(grid_size*2)*i + j] = 0;
 		}
 	}
 
 	for(int i=0; i < snake.length; ++i)
 	{
-		grid[snake.x[i]][snake.y[i]] = 1;
+		grid[(grid_size*2)*snake.x[i] + snake.y[i]] = 1;
 	}
 
 	glutPostRedisplay();
@@ -259,11 +259,12 @@ int main( int argc, char** argv )
 	{
 		for(int j=0; j < grid_size*2; ++j)
 		{
-			grid[i][j] = 0;
+			grid[(grid_size*2)*i + j] = 0;
 		}
 	}
 
-	// The snake starts in the middle of the arena, therefore:
+	// The snake starts in the middle of the arena.
+	// The size of the grid is (grid_size * 2)^2 therefore:
 	snake.x_position = grid_size;
 	snake.y_position = grid_size;
 
