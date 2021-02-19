@@ -9,6 +9,11 @@
 #define INITIAL_WINDOW_WIDTH 500
 #define INITIAL_WINDOW_HEIGHT 500
 
+#define UP 		0
+#define DOWN	1
+#define LEFT 	2
+#define RIGHT	3
+
 // Variables to control frame rate
 const int target_fps = 4;
 float sleep_t = (1.0f / target_fps) * 1000;
@@ -90,21 +95,24 @@ void draw_square(int grid_x, int grid_y, GLfloat square_size)
 
 void gen_food()
 {
-	food.x_position = rand_grid();
-	food.y_position = rand_grid();
-
-	//int open_grid
-	// TODO remove this crappy loop and write new function that checks unfilled contents of grid[]
+	int open_grid[(grid_size*2)^2];
+	int open_grid_index;
 	for(int i=0; i < grid_size*2; ++i)
 	{
 		for(int j=0; j < grid_size*2; ++j)
 		{
 			if(!grid[(grid_size*2)*i + j])
 			{
-				// This is actually going to be a pain. It'd be better to reduce grid to a 1d array. TODO tomorrow.
+				// Save co-ordinates of grid not currently occupied
+				open_grid[open_grid_index] = grid_size*2*i + j;
 			}
 		}
 	}
+	int food_position = rand() % (grid_size*2^2);
+	// TODO: x_position and y_position should be replaced with a single index value
+	//food.x_position = rand_grid();
+	//food.y_position = rand_grid();
+
 }
 
 void display()
@@ -138,33 +146,33 @@ static void keyboard(unsigned char key, int x, int y)
 	{
 		// FIXME: this check can sometimes let users reverse the snake
 		// in place with quick enough input.
-		if(snake.direction != 1 && snake.direction != 0)
+		if(snake.direction != DOWN && snake.direction != UP)
 		{
-			snake.direction = 0;
+			snake.direction = UP;
 			fprintf(stdout, "Up, y=%d\n", snake.y_position);
 		}
 	}
 	if(key == 's' || key == 'S')
 	{
-		if(snake.direction != 0 && snake.direction != 1)
+		if(snake.direction != UP && snake.direction != DOWN)
 		{
-			snake.direction = 1;
+			snake.direction = DOWN;
 			fprintf(stdout, "Down, y=%d\n", snake.y_position);
 		}
 	}
 	if(key == 'a' || key == 'A')
 	{
-		if(snake.direction != 3 && snake.direction != 2)
+		if(snake.direction != RIGHT && snake.direction != LEFT)
 		{
-			snake.direction = 2;
+			snake.direction = LEFT;
 			fprintf(stdout, "Left, x=%d\n", snake.x_position);
 		}
 	}
 	if(key == 'd' || key == 'D')
 	{
-		if(snake.direction != 2 && snake.direction != 3)
+		if(snake.direction != LEFT && snake.direction != RIGHT)
 		{
-			snake.direction = 3;
+			snake.direction = RIGHT;
 			fprintf(stdout, "Right, x=%d\n", snake.x_position);
 		}
 	}
@@ -175,8 +183,10 @@ static void reshape(int w, int h)
 	snake.window_size[0] = w;
 	snake.window_size[1] = h;
 
+	// To prevent a division by 0
 	if(h == 0)
 		h=1;
+
 	float ratio = 1.0* w/h;
 	glMatrixMode(GL_PROJECTION);
 
@@ -198,16 +208,16 @@ static void timer(int msec)
 
 	// Check snake direction
 	switch(snake.direction) {
-		case 0:
+		case UP:
 			snake.y_position++;
 			break;
-		case 1:
+		case DOWN:
 			snake.y_position--;
 			break;
-		case 2:
+		case LEFT:
 			snake.x_position--;
 			break;
-		case 3:
+		case RIGHT:
 			snake.x_position++;
 			break;
 	}
@@ -275,7 +285,7 @@ int main( int argc, char** argv )
 	snake.window_size[1] = INITIAL_WINDOW_HEIGHT;
 	snake.size = grid_increment / 2;
 	snake.length = 1;
-	snake.direction = 0;
+	snake.direction = UP;
 	food.size = grid_increment / 5;
 
     glutInit(&argc, argv);				 // Initialise
