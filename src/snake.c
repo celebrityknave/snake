@@ -59,13 +59,13 @@ void draw_square(int grid_x, int grid_y, GLfloat square_size)
 
 	// Convert grid co-ordinates to floating point values.
 	// TODO: make this conversion its own function
-	if(grid_x - grid_size != 0)
-		x = (float)(grid_x - grid_size) / (grid_size);
+	if(grid_x - GRID_SIZE != 0)
+		x = (float)(grid_x - GRID_SIZE) / (GRID_SIZE);
 	else
 		x = 0.0f;
 
-	if(grid_y - grid_size != 0)
-		y = (float)(grid_y - grid_size) / (grid_size);
+	if(grid_y - GRID_SIZE != 0)
+		y = (float)(grid_y - GRID_SIZE) / (GRID_SIZE);
 	else
 		y = 0.0f;
 
@@ -231,17 +231,17 @@ static void timer(int msec)
 
 	// Zero all grid locations and write out snake coordinates
 	// This could be more efficient
-	for(int i=0; i < grid_size*2; ++i)
+	for(int i=0; i < GRID_SIZE * 2; ++i)
 	{
-		for(int j=0; j < grid_size*2; ++j)
+		for(int j=0; j < GRID_SIZE * 2; ++j)
 		{
-			grid[(grid_size*2)*i + j] = 0;
+			grid[(GRID_SIZE * 2)*i + j] = 0;
 		}
 	}
 
 	for(int i=0; i < snake.length; ++i)
 	{
-		grid[(grid_size*2)*snake.x[i] + snake.y[i]] = 1;
+		grid[(GRID_SIZE * 2)*snake.x[i] + snake.y[i]] = 1;
 	}
 
 	glutPostRedisplay();
