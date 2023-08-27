@@ -5,22 +5,13 @@
 #include <GL/freeglut.h>
 #include <unistd.h>
 #include <math.h>
-
-#define INITIAL_WINDOW_WIDTH 500
-#define INITIAL_WINDOW_HEIGHT 500
-
-#define UP 		0
-#define DOWN	1
-#define LEFT 	2
-#define RIGHT	3
+#include "framework/definitions.h"
 
 // Variables to control frame rate
-const int target_fps = 4;
-float sleep_t = (1.0f / target_fps) * 1000;
+float sleep_t = (1.0f / TARGET_FPS) * 1000;
 
 // Variables to control arena size
-const int grid_size = 10;
-const float grid_increment = 1.0f / grid_size;
+const float grid_increment = 1.0f / GRID_SIZE;
 
 // For comparing float values
 float epsilon = 0.00001;
@@ -38,10 +29,10 @@ bool grid[4096]; // TODO dynamically allocate grid size based on user input
 
 // Generate random number between -1.0 and 1.0 in 1/grid_size increments
 GLfloat rand_low() {
-	return roundf( (-1.0f + 2.0f*((double)rand() / (double)RAND_MAX)) * (float)grid_size) / (float)grid_size;
+	return roundf( (-1.0f + 2.0f*((double)rand() / (double)RAND_MAX)) * (float)GRID_SIZE) / (float)GRID_SIZE;
 }
 int rand_grid() {
-	return (rand() % grid_size * 2);
+	return (rand() % GRID_SIZE * 2);
 }
 
 struct {
@@ -95,20 +86,20 @@ void draw_square(int grid_x, int grid_y, GLfloat square_size)
 
 void gen_food()
 {
-	int open_grid[(grid_size*2)^2];
+	int open_grid[(GRID_SIZE * 2)^2];
 	int open_grid_index;
-	for(int i=0; i < grid_size*2; ++i)
+	for(int i=0; i < GRID_SIZE * 2; ++i)
 	{
-		for(int j=0; j < grid_size*2; ++j)
+		for(int j=0; j < GRID_SIZE * 2; ++j)
 		{
-			if(!grid[(grid_size*2)*i + j])
+			if(!grid[(GRID_SIZE * 2) * i + j])
 			{
 				// Save co-ordinates of grid not currently occupied
-				open_grid[open_grid_index] = grid_size*2*i + j;
+				open_grid[open_grid_index] = GRID_SIZE * 2 * i + j;
 			}
 		}
 	}
-	int food_position = rand() % (grid_size*2^2);
+	int food_position = rand() % (GRID_SIZE * 2 ^ 2);
 	// TODO: x_position and y_position should be replaced with a single index value
 	//food.x_position = rand_grid();
 	//food.y_position = rand_grid();
@@ -124,11 +115,11 @@ void display()
 	draw_square(food.x_position, food.y_position, food.size);
 
 	// Draw snake
-	for(int i=0; i < grid_size*2; ++i)
+	for(int i = 0; i < GRID_SIZE * 2; ++i)
 	{
-		for(int j=0; j < grid_size*2; ++j)
+		for(int j = 0; j < GRID_SIZE * 2; ++j)
 		{
-			if(grid[(grid_size*2)*i + j])
+			if(grid[(GRID_SIZE * 2) * i + j])
 				draw_square(i, j, snake.size);
 		}
 	}
@@ -138,11 +129,11 @@ void display()
 
 static void keyboard(unsigned char key, int x, int y)
 {
-	if(key == 'q' || key == 'Q')
+	if(key == QUIT_KEY)
 	{
 		glutLeaveMainLoop();
 	}
-	if(key == 'w' || key == 'W')
+	if(key == UP_KEY)
 	{
 		// FIXME: this check can sometimes let users reverse the snake
 		// in place with quick enough input.
@@ -152,7 +143,7 @@ static void keyboard(unsigned char key, int x, int y)
 			fprintf(stdout, "Up, y=%d\n", snake.y_position);
 		}
 	}
-	if(key == 's' || key == 'S')
+	if(key == DOWN_KEY)
 	{
 		if(snake.direction != UP && snake.direction != DOWN)
 		{
@@ -160,7 +151,7 @@ static void keyboard(unsigned char key, int x, int y)
 			fprintf(stdout, "Down, y=%d\n", snake.y_position);
 		}
 	}
-	if(key == 'a' || key == 'A')
+	if(key == LEFT_KEY)
 	{
 		if(snake.direction != RIGHT && snake.direction != LEFT)
 		{
@@ -168,7 +159,7 @@ static void keyboard(unsigned char key, int x, int y)
 			fprintf(stdout, "Left, x=%d\n", snake.x_position);
 		}
 	}
-	if(key == 'd' || key == 'D')
+	if(key == RIGHT_KEY)
 	{
 		if(snake.direction != LEFT && snake.direction != RIGHT)
 		{
@@ -265,18 +256,18 @@ static void update(void)
 int main( int argc, char** argv )
 {
 	// Initialise grid to have no collision
-	for(int i=0; i < grid_size*2; ++i)
+	for(int i=0; i < GRID_SIZE * 2; ++i)
 	{
-		for(int j=0; j < grid_size*2; ++j)
+		for(int j=0; j < GRID_SIZE * 2; ++j)
 		{
-			grid[(grid_size*2)*i + j] = 0;
+			grid[(GRID_SIZE * 2)*i + j] = 0;
 		}
 	}
 
 	// The snake starts in the middle of the arena.
 	// The size of the grid is (grid_size * 2)^2 therefore:
-	snake.x_position = grid_size;
-	snake.y_position = grid_size;
+	snake.x_position = GRID_SIZE;
+	snake.y_position = GRID_SIZE;
 
 	food.x_position = rand_grid();
 	food.y_position = rand_grid();
@@ -288,12 +279,12 @@ int main( int argc, char** argv )
 	snake.direction = UP;
 	food.size = grid_increment / 5;
 
-    glutInit(&argc, argv);				 // Initialise
-    glutInitDisplayMode(GLUT_SINGLE);    // single color buffer and no depth buffer.
-    glutInitWindowSize(snake.window_size[0], snake.window_size[1]); // Size of display area
-    glutInitWindowPosition(100,100);     // Location of window in screen coordinates.
-    glutCreateWindow("Snake"); 			 // Window title.
-    glutDisplayFunc(display);            // Called when redrawing window.
+    glutInit(&argc, argv);				 									// Initialise
+    glutInitDisplayMode(GLUT_SINGLE);    								// single color buffer and no depth buffer.
+    glutInitWindowSize(snake.window_size[0], snake.window_size[1]);	// Size of display area
+    glutInitWindowPosition(100,100);											// Location of window in screen coordinates.
+    glutCreateWindow("Snake");												// Window title.
+    glutDisplayFunc(display);												// Called when redrawing window.
 	glutTimerFunc(sleep_t, timer, 0);
 	//glutReshapeFunc(&reshape);
     glutKeyboardFunc(&keyboard);
