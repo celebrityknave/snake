@@ -7,15 +7,6 @@
 #include <math.h>
 #include "framework/definitions.h"
 
-// Variables to control frame rate
-float sleep_t = (1.0f / TARGET_FPS) * 1000;
-
-// Variables to control arena size
-const float grid_increment = 1.0f / GRID_SIZE;
-
-// For comparing float values
-float epsilon = 0.00001;
-
 int msleep(unsigned int tms)
 {
 	return usleep(tms * 1000);
@@ -24,16 +15,10 @@ int msleep(unsigned int tms)
 // Compare two float values for equality within some given epsilon
 bool fequal(GLfloat a, GLfloat b)
 {
-	return fabs(a-b) < epsilon;
+	return fabs(a-b) < EPSILON;
 }
 
 bool grid[4096]; // TODO dynamically allocate grid size based on user input
-
-// Generate random number between -1.0 and 1.0 in 1/grid_size increments
-GLfloat rand_low()
-{
-	return roundf( (-1.0f + 2.0f*((double)rand() / (double)RAND_MAX)) * (float)GRID_SIZE/2) / (float)GRID_SIZE/2;
-}
 
 int rand_grid()
 {
@@ -96,7 +81,7 @@ void draw_square(int grid_x, int grid_y, GLfloat square_size)
     glEnd();
 }
 
-void gen_food()
+void generateFood()
 {
 	food.x_position = rand_grid();
 	food.y_position = rand_grid();
@@ -223,16 +208,28 @@ void clearGrid()
 	}
 }
 
+void writeSnakeCoordinates()
+{
+	for(int i=0; i < snake.length; ++i)
+	{
+		grid[GRID_SIZE * world.x[i] + world.y[i]] = 1;
+	}
+}
+
+void embiggenSnake()
+{
+		snake.body_x[snake.length-1] = snake.x_position;
+		snake.body_y[snake.length-1] = snake.y_position;
+		snake.length++;
+}
+
 static void timer(int msec)
 {
 	// Check whether snake has eaten a piece of food
 	if(snakeHasEatenFood())
 	{
-		world.x[snake.length-1] = snake.x_position;
-		world.y[snake.length-1] = snake.y_position;
-		snake.length++;
-
-		gen_food();
+		embiggenSnake();s
+		generateFood();
 	}
 
 	parseUserInput();
@@ -255,13 +252,10 @@ static void timer(int msec)
 
 	clearGrid();
 
-	for(int i=0; i < snake.length; ++i)
-	{
-		grid[GRID_SIZE * world.x[i] + world.y[i]] = 1;
-	}
+	writeSnakeCoordinates();
 
 	glutPostRedisplay();
-	glutTimerFunc(sleep_t, timer, 0);
+	glutTimerFunc(SLEEP_T, timer, 0);
 }
 
 static void update(void)
@@ -272,7 +266,7 @@ static void update(void)
 void init()
 {
 	clearGrid();
-	gen_food();
+	generateFood();
 
 	// The snake starts in the middle of the arena.
 	snake.x_position = GRID_SIZE / 2;
@@ -280,10 +274,10 @@ void init()
 
 	world.window_size[0] = INITIAL_WINDOW_WIDTH;
 	world.window_size[1] = INITIAL_WINDOW_HEIGHT;
-	snake.size = grid_increment;
+	snake.size = CELL_SIZE;
 	snake.length = 1;
 	snake.direction = UP;
-	food.size = grid_increment / 2;
+	food.size = CELL_SIZE / 2;
 }
 
 int main( int argc, char** argv )
@@ -294,9 +288,9 @@ int main( int argc, char** argv )
     glutInitDisplayMode(GLUT_SINGLE);    								// single color buffer and no depth buffer.
     glutInitWindowSize(world.window_size[0], world.window_size[1]);	// Size of display area
     glutInitWindowPosition(100,100);											// Location of window in screen coordinates.
-    glutCreateWindow("Snake");												// Window title.
+    glutCreateWindow(WINDOW_TITLE);												// Window title.
     glutDisplayFunc(display);												// Called when redrawing window.
-	glutTimerFunc(sleep_t, timer, 0);
+	glutTimerFunc(SLEEP_T, timer, 0);
 	//glutReshapeFunc(&reshape);
     glutKeyboardFunc(&readUserInput);
 

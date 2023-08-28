@@ -17,3 +17,9 @@
 #define LEFT_KEY 'a'
 #define RIGHT_KEY 'd'
 #define QUIT_KEY 'q'
+
+// Other values
+#define WINDOW_TITLE "snake"
+#define EPSILON 1E-5
+#define SLEEP_T (1.0f / TARGET_FPS) * 1000
+#define CELL_SIZE (1.0f / GRID_SIZE)
