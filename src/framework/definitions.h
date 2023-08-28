@@ -3,7 +3,7 @@
 #define INITIAL_WINDOW_WIDTH 500
 #define INITIAL_WINDOW_HEIGHT 500
 #define TARGET_FPS 4
-#define GRID_SIZE 10
+#define GRID_SIZE 20
 
 // Define directions
 #define UP 		0
