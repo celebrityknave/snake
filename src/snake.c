@@ -7,6 +7,35 @@
 #include <math.h>
 #include "framework/definitions.h"
 
+// TODO : Move some of these to definitions.h, Create typedefs.
+// TODO : Add toggle for debug logging
+struct world {
+	GLsizei window_height;
+	GLsizei window_width;
+} world;
+
+struct point
+{
+	int x;
+	int y;
+};
+
+typedef struct point point;
+
+struct snake
+{
+	GLfloat size;
+	point position;
+	point body[256];
+	GLint direction;
+	GLint length;
+} snake;
+
+struct food {
+	struct point position;
+	GLfloat size;
+} food;
+
 int msleep(unsigned int tms)
 {
 	return usleep(tms * 1000);
@@ -20,51 +49,34 @@ bool fequal(GLfloat a, GLfloat b)
 
 bool grid[4096]; // TODO dynamically allocate grid size based on user input
 
-int rand_grid()
+struct point randGridPoint()
 {
-	return (rand() % GRID_SIZE);
+	point randPoint;
+	randPoint.x = rand() % GRID_SIZE;
+	randPoint.y = rand() % GRID_SIZE;
+
+	return randPoint;
 }
 
-struct world {
-	GLsizei window_size[2];
-	int x[256];			// TODO dynamically allocate co-ordinate limits based on user input
-	int y[256];
-} world;
-
-struct snake {
-	GLfloat size;
-	int x_position;
-	int y_position;
-	GLint direction;
-	GLint length;
-	int body_x[256];
-	int body_y[256];
-} snake;
-
-struct food {
-	int x_position;
-	int y_position;
-	GLfloat size;
-} food;
-
+// TODO : Slight refactor to call this a single time on a given point to return a tuple
 float convertGridToFloat(int gridPoint)
 {
 	if(gridPoint - GRID_SIZE != 0)
 	{
-		return (float)(gridPoint - GRID_SIZE / 2) / (GRID_SIZE / 2);
+		return (float)(gridPoint - GRID_SIZE / 2.0) / (GRID_SIZE / 2.0);
 	}
 
 	return 0.0f;
 }
 
-void draw_square(int grid_x, int grid_y, GLfloat square_size)
+void drawSquare(point point, GLfloat square_size)
 {
 	GLfloat x;
 	GLfloat y;
 
 	// Convert grid co-ordinates to floating point values.
-	x = convertGridToFloat(grid_x);
-	y = convertGridToFloat(grid_y);
+	x = convertGridToFloat(point.x);
+	y = convertGridToFloat(point.y);
 
     glBegin(GL_POLYGON);
     glColor3f( 0, 1, 0 );
@@ -79,12 +91,13 @@ void draw_square(int grid_x, int grid_y, GLfloat square_size)
     glColor3f( 0, 1, 0 );
     glVertex2f( x+square_size, y-square_size );
     glEnd();
+
+	fprintf(stdout, "draw square at, x=%d,y=%d\n", point.x, point.y);
 }
 
 void generateFood()
 {
-	food.x_position = rand_grid();
-	food.y_position = rand_grid();
+	food.position = randGridPoint();
 }
 
 void display()
@@ -93,15 +106,16 @@ void display()
     glClear( GL_COLOR_BUFFER_BIT );
 
 	// Draw food
-	draw_square(food.x_position, food.y_position, food.size);
+	drawSquare(food.position, food.size);
 
 	// Draw snake
 	for(int i = 0; i < GRID_SIZE; ++i)
 	{
 		for(int j = 0; j < GRID_SIZE; ++j)
 		{
+			point snakeBodyPosition = {i, j};
 			if(grid[GRID_SIZE * i + j])
-				draw_square(i, j, snake.size);
+				drawSquare(snakeBodyPosition, snake.size);
 		}
 	}
 
@@ -121,7 +135,7 @@ static void readUserInput(unsigned char key, int x, int y)
 		if(snake.direction != DOWN && snake.direction != UP)
 		{
 			snake.direction = UP;
-			fprintf(stdout, "Up, y=%d\n", snake.y_position);
+			fprintf(stdout, "Up, x=%d,y=%d\n", snake.position.x, snake.position.y);
 		}
 	}
 	if(key == DOWN_KEY)
@@ -129,7 +143,7 @@ static void readUserInput(unsigned char key, int x, int y)
 		if(snake.direction != UP && snake.direction != DOWN)
 		{
 			snake.direction = DOWN;
-			fprintf(stdout, "Down, y=%d\n", snake.y_position);
+			fprintf(stdout, "Down, x=%d,y=%d\n", snake.position.x, snake.position.y);
 		}
 	}
 	if(key == LEFT_KEY)
@@ -137,7 +151,7 @@ static void readUserInput(unsigned char key, int x, int y)
 		if(snake.direction != RIGHT && snake.direction != LEFT)
 		{
 			snake.direction = LEFT;
-			fprintf(stdout, "Left, x=%d\n", snake.x_position);
+			fprintf(stdout, "Left, x=%d,y=%d\n", snake.position.x, snake.position.y);
 		}
 	}
 	if(key == RIGHT_KEY)
@@ -145,19 +159,21 @@ static void readUserInput(unsigned char key, int x, int y)
 		if(snake.direction != LEFT && snake.direction != RIGHT)
 		{
 			snake.direction = RIGHT;
-			fprintf(stdout, "Right, x=%d\n", snake.x_position);
+			fprintf(stdout, "Right, x=%d,y=%d\n", snake.position.x, snake.position.y);
 		}
 	}
 }
 
 static void reshape(int width, int height)
 {
-	world.window_size[0] = width;
-	world.window_size[1] = height;
+	world.window_width = width;
+	world.window_height = height;
 
 	// To prevent a division by 0
 	if(height == 0)
+	{
 		height = 1;
+	}
 
 	float aspectRatio = 1.0 * width / height;
 	glMatrixMode(GL_PROJECTION);
@@ -170,9 +186,21 @@ static void reshape(int width, int height)
 
 bool snakeHasEatenFood()
 {
-	if(snake.x_position == food.x_position && snake.y_position == food.y_position)
+	if(snake.position.x == food.position.x && snake.position.y == food.position.y)
 	{
 		return true;
+	}
+	return false;
+}
+
+bool snakeHasEatenSelf()
+{
+	for(int i = 1; i < 256; i++)
+	{
+		if(snake.position.x == snake.body[i].x && snake.position.y == snake.body[i].y)
+		{
+			return true;
+		}
 	}
 	return false;
 }
@@ -180,20 +208,15 @@ bool snakeHasEatenFood()
 void parseUserInput()
 {
 	// Check snake direction
-	switch(snake.direction) {
-		case UP:
-			snake.y_position++;
-			break;
-		case DOWN:
-			snake.y_position--;
-			break;
-		case LEFT:
-			snake.x_position--;
-			break;
-		case RIGHT:
-			snake.x_position++;
-			break;
-	}
+	if(snake.direction == UP)
+		snake.position.y++;
+	if(snake.direction == DOWN)
+		snake.position.y--;
+	if(snake.direction == LEFT)
+		snake.position.x--;
+	if(snake.direction == RIGHT)
+		snake.position.x++;
+
 }
 
 void clearGrid()
@@ -208,27 +231,52 @@ void clearGrid()
 	}
 }
 
+void init()
+{
+	clearGrid();
+	generateFood();
+
+	// The snake starts in the middle of the arena.
+	snake.position.x = GRID_SIZE / 2;
+	snake.position.y = GRID_SIZE / 2;
+
+	world.window_width = INITIAL_WINDOW_WIDTH;
+	world.window_height = INITIAL_WINDOW_HEIGHT;
+	snake.size = CELL_SIZE;
+	snake.length = 1;
+	snake.direction = UP;
+	food.size = CELL_SIZE / 2;
+}
+
 void writeSnakeCoordinates()
 {
 	for(int i=0; i < snake.length; ++i)
 	{
-		grid[GRID_SIZE * world.x[i] + world.y[i]] = 1;
+		grid[GRID_SIZE * snake.body[i].x + snake.body[i].y] = 1;
 	}
 }
 
 void embiggenSnake()
 {
-		snake.body_x[snake.length-1] = snake.x_position;
-		snake.body_y[snake.length-1] = snake.y_position;
+		// TODO : remove the next two lines. Make them unnecessary by keeping coordinates static until they time out.
+		snake.body[snake.length-1].x = snake.position.x;
+		snake.body[snake.length-1].y = snake.position.y;
 		snake.length++;
 }
 
 static void timer(int msec)
 {
+
+	if(snakeHasEatenSelf())
+	{
+		// TODO : create game over screen
+		init();
+	}
+
 	// Check whether snake has eaten a piece of food
 	if(snakeHasEatenFood())
 	{
-		embiggenSnake();s
+		embiggenSnake();
 		generateFood();
 	}
 
@@ -240,13 +288,13 @@ static void timer(int msec)
 	{
 		if(i == 0)
 		{
-			world.x[0] = snake.x_position;
-			world.y[0] = snake.y_position;
+			snake.body[0].x = snake.position.x;
+			snake.body[0].y = snake.position.y;
 		}
 		else
 		{
-			world.x[i] = world.x[i - 1];
-			world.y[i] = world.y[i - 1];
+			snake.body[i].x = snake.body[i - 1].x;
+			snake.body[i].y = snake.body[i - 1].y;
 		}
 	}
 
@@ -263,30 +311,13 @@ static void update(void)
 	glutPostRedisplay();
 }
 
-void init()
-{
-	clearGrid();
-	generateFood();
-
-	// The snake starts in the middle of the arena.
-	snake.x_position = GRID_SIZE / 2;
-	snake.y_position = GRID_SIZE / 2;
-
-	world.window_size[0] = INITIAL_WINDOW_WIDTH;
-	world.window_size[1] = INITIAL_WINDOW_HEIGHT;
-	snake.size = CELL_SIZE;
-	snake.length = 1;
-	snake.direction = UP;
-	food.size = CELL_SIZE / 2;
-}
-
 int main( int argc, char** argv )
 {
 	init();
 
     glutInit(&argc, argv);				 									// Initialise
     glutInitDisplayMode(GLUT_SINGLE);    								// single color buffer and no depth buffer.
-    glutInitWindowSize(world.window_size[0], world.window_size[1]);	// Size of display area
+    glutInitWindowSize(world.window_width, world.window_height);	// Size of display area
     glutInitWindowPosition(100,100);											// Location of window in screen coordinates.
     glutCreateWindow(WINDOW_TITLE);												// Window title.
     glutDisplayFunc(display);												// Called when redrawing window.
